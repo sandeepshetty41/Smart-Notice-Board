@@ -1,4 +1,4 @@
-// 🔥 Firebase Config (PUT YOUR REAL VALUES)
+// 🔥 Firebase Config (REPLACE WITH YOUR DETAILS)
 const firebaseConfig = {
   apiKey: "AIzaSyC62UU4SKGWg50oKV0xoGjuqJMTVTqAYvQ",
   authDomain: "smart-ai-board.firebaseapp.com",
@@ -8,69 +8,68 @@ const firebaseConfig = {
 
 // 🔥 Initialize Firebase
 firebase.initializeApp(firebaseConfig);
-console.log("✅ Firebase initialized");
+console.log("✅ Firebase Connected");
 
 // 🔥 Database Reference
 const db = firebase.database().ref("notices");
-console.log("✅ Database reference created");
 
-// 🔥 Add Notice Function
-function addNotice() {
-  console.log("🟡 Button clicked");
+// 🔥 Make function global (IMPORTANT FIX)
+window.addNotice = function () {
+  console.log("🟡 Add button clicked");
 
   const input = document.getElementById("noticeInput");
-
-  if (!input) {
-    console.error("❌ Input box not found!");
-    return;
-  }
-
   const text = input.value.trim();
-  console.log("🟡 Input value:", text);
 
   if (text === "") {
     alert("Enter a notice!");
     return;
   }
 
-  console.log("🟡 Sending data to Firebase...");
-
   db.push({
-    message: text
+    message: text,
+    time: new Date().toLocaleString()
   })
   .then(() => {
-    console.log("✅ Notice uploaded successfully!");
+    console.log("✅ Uploaded successfully");
   })
   .catch((error) => {
-    console.error("❌ Upload failed:", error);
+    console.error("❌ Error:", error);
   });
 
   input.value = "";
-}
+};
 
-// 🔥 Read Data (Realtime Check)
+// 🔥 Display Notices (Realtime)
 db.on("value", (snapshot) => {
-  console.log("🟢 Data received from Firebase");
+  console.log("🟢 Data loaded");
 
   const list = document.getElementById("noticeList");
-
-  if (!list) {
-    console.error("❌ noticeList not found!");
-    return;
-  }
-
   list.innerHTML = "";
 
   snapshot.forEach((child) => {
     const data = child.val();
-    console.log("📦 Data:", data);
+    const key = child.key;
 
     const li = document.createElement("li");
-    li.innerText = data.message;
 
-    list.appendChild(li);
+    li.innerHTML = `
+      <div>
+        <b>${data.message}</b><br>
+        <small>${data.time || ""}</small>
+      </div>
+      <button onclick="deleteNotice('${key}')">Delete</button>
+    `;
+
+    list.prepend(li);
   });
-
-}, (error) => {
-  console.error("❌ Read failed:", error);
 });
+
+// 🔥 Delete Notice (GLOBAL FIX)
+window.deleteNotice = function (key) {
+  db.child(key).remove()
+    .then(() => console.log("🗑 Deleted"))
+    .catch((err) => console.error(err));
+};
+
+// 🔥 EXTRA: Check if JS is loaded
+console.log("🚀 Script Loaded Successfully");
