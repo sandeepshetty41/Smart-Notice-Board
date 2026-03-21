@@ -1,6 +1,6 @@
-console.log("JS Loaded");
+console.log("App Started");
 
-// Firebase config
+// 🔥 Firebase Config (REPLACE THIS)
 const firebaseConfig = {
   apiKey: "AIzaSyC62UU4SKGWg50oKV0xoGjuqJMTVTqAYvQ",
   authDomain: "smart-ai-board.firebaseapp.com",
@@ -10,11 +10,11 @@ const firebaseConfig = {
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
+
+// Database reference
 const db = firebase.database().ref("notices");
 
-console.log("Firebase connected");
-
-// Add Notice
+// Add notice
 function addNotice() {
   const input = document.getElementById("noticeInput");
   const text = input.value.trim();
@@ -32,20 +32,33 @@ function addNotice() {
   input.value = "";
 }
 
-// Button click event
+// Button event
 document.getElementById("addBtn").addEventListener("click", addNotice);
 
-// Display notices
+// Display notices (Realtime)
 db.on("value", (snapshot) => {
   const list = document.getElementById("noticeList");
   list.innerHTML = "";
 
   snapshot.forEach((child) => {
     const data = child.val();
+    const key = child.key;
+
     const li = document.createElement("li");
 
-    li.textContent = data.message;
+    li.innerHTML = `
+      <div>
+        <b>${data.message}</b><br>
+        <small>${data.time}</small>
+      </div>
+      <button class="deleteBtn">Delete</button>
+    `;
 
-    list.appendChild(li);
+    // Delete button event
+    li.querySelector(".deleteBtn").addEventListener("click", () => {
+      db.child(key).remove();
+    });
+
+    list.prepend(li);
   });
 });
