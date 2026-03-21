@@ -14,7 +14,7 @@ firebase.initializeApp(firebaseConfig);
 // Database reference
 const db = firebase.database().ref("notices");
 
-// Add notice
+// ✅ Add Notice
 function addNotice() {
   const input = document.getElementById("noticeInput");
   const text = input.value.trim();
@@ -35,7 +35,7 @@ function addNotice() {
 // Button event
 document.getElementById("addBtn").addEventListener("click", addNotice);
 
-// Display notices (Realtime)
+// ✅ Display Notices + Delete
 db.on("value", (snapshot) => {
   const list = document.getElementById("noticeList");
   list.innerHTML = "";
@@ -49,16 +49,18 @@ db.on("value", (snapshot) => {
     li.innerHTML = `
       <div>
         <b>${data.message}</b><br>
-        <small>${data.time}</small>
+        <small>${data.time || ""}</small>
       </div>
       <button class="deleteBtn">Delete</button>
     `;
 
-    // Delete button event
+    // ✅ Delete function
     li.querySelector(".deleteBtn").addEventListener("click", () => {
-      db.child(key).remove();
+      if (confirm("Delete this notice?")) {
+        db.child(key).remove();
+      }
     });
 
-    list.prepend(li);
+    list.prepend(li); // latest on top
   });
 });
