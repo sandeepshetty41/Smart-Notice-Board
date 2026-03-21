@@ -1,24 +1,28 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>Smart Notice Board</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<h1>Smart Notice Board</h1>
+  <div class="container">
+    <h1>📢 Smart Notice Board</h1>
 
-<input type="text" id="noticeInput" placeholder="Enter notice">
-<button id="addBtn">Add Notice</button>
+    <div class="input-box">
+      <input type="text" id="noticeInput" placeholder="Enter notice...">
+      <button id="addBtn">Add</button>
+    </div>
 
-<ul id="noticeList"></ul>
+    <ul id="noticeList"></ul>
+  </div>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
-<!-- Your JS must be LAST -->
-<script src="script.js"></script>
+  <script src="script.js"></script>
 
 </body>
 </html>
