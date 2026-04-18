@@ -1,0 +1,204 @@
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+// LCD (try 0x27 or 0x3F)
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+// WiFi
+const char* ssid = "Redmi 12";
+const char* password = "12345678";
+
+// Firebase
+const char* firebaseURL = "https://smart-ai-board-default-rtdb.firebaseio.com/notices.json";
+
+// Pins
+#define LED 2
+#define BUZZER 27   // connected to transistor base via 1k resistor
+
+// Keywords
+String emergencyKeywords[] = {"urgent", "emergency", "danger", "critical", "important"};
+String warningKeywords[]   = {"warning", "exam", "test", "deadline", "submission"};
+
+void setup() {
+  Serial.begin(115200);
+
+  // I2C setup (important for stability)
+  Wire.begin(21, 22);
+  Wire.setClock(100000);
+
+  lcd.init();
+  lcd.backlight();
+
+  pinMode(LED, OUTPUT);
+  pinMode(BUZZER, OUTPUT);
+
+  lcd.setCursor(0, 0);
+  lcd.print("Smart Board");
+  lcd.setCursor(0, 1);
+  lcd.print("Connecting...");
+
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+  }
+
+  delay(1000);
+  lcd.clear();
+  lcd.print("WiFi Connected");
+  delay(1500);
+}
+
+void loop() {
+
+  if (WiFi.status() == WL_CONNECTED) {
+
+    showLoading();
+
+    HTTPClient http;
+    http.begin(firebaseURL);
+
+    int httpCode = http.GET();
+
+    if (httpCode == 200) {
+
+      String payload = http.getString();
+      Serial.println(payload);
+
+      DynamicJsonDocument doc(2048);
+      if (deserializeJson(doc, payload)) {
+        showText("JSON Error");
+        delay(2000);
+        return;
+      }
+
+      for (JsonPair kv : doc.as<JsonObject>()) {
+
+        String message = kv.value()["message"] | "No Message";
+
+        message.replace("\n", " ");
+        message.trim();
+
+        Serial.println(message);
+
+        displayMessage(message);
+        playSound(message);
+      }
+
+    } else {
+      showText("HTTP Error");
+      delay(2000);
+    }
+
+    http.end();
+  }
+
+  delay(5000);
+}
+
+//
+// 📺 DISPLAY FUNCTIONS
+//
+
+void showText(String text) {
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print(text);
+}
+
+void displayMessage(String text) {
+
+  lcd.clear();
+
+  if (text.length() <= 16) {
+    lcd.setCursor(0, 0);
+    lcd.print(text);
+    delay(3000);
+    return;
+  }
+
+  // smooth scroll
+  for (int i = 0; i <= text.length() - 16; i++) {
+
+    lcd.setCursor(0, 0);
+    lcd.print("                ");
+    lcd.setCursor(0, 0);
+
+    lcd.print(text.substring(i, i + 16));
+
+    delay(500);
+  }
+}
+
+void showLoading() {
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Loading");
+
+  lcd.setCursor(0, 1);
+  lcd.print("                ");
+
+  for (int i = 0; i < 4; i++) {
+    lcd.setCursor(i, 1);
+    lcd.print(".");
+    delay(400);
+  }
+}
+
+//
+// 🔊 SOUND SYSTEM (FOR TRANSISTOR BUZZER)
+//
+
+bool containsKeyword(String msg, String keywords[], int size) {
+  for (int i = 0; i < size; i++) {
+    if (msg.indexOf(keywords[i]) >= 0) return true;
+  }
+  return false;
+}
+
+void playSound(String msg) {
+
+  msg.toLowerCase();
+
+  if (containsKeyword(msg, emergencyKeywords, 5)) {
+    soundEmergency();
+  }
+  else if (containsKeyword(msg, warningKeywords, 5)) {
+    soundWarning();
+  }
+  else {
+    soundNormal();
+  }
+}
+
+void soundEmergency() {
+  for (int i = 0; i < 3; i++) {
+    digitalWrite(LED, HIGH);
+    tone(BUZZER, 3000);  // loud via transistor
+    delay(200);
+    noTone(BUZZER);
+    digitalWrite(LED, LOW);
+    delay(200);
+  }
+}
+
+void soundWarning() {
+  for (int i = 0; i < 2; i++) {
+    digitalWrite(LED, HIGH);
+    tone(BUZZER, 2000);
+    delay(300);
+    noTone(BUZZER);
+    digitalWrite(LED, LOW);
+    delay(200);
+  }
+}
+
+void soundNormal() {
+  tone(BUZZER, 1000);
+  delay(200);
+  noTone(BUZZER);
+}
