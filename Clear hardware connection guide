@@ -1,0 +1,83 @@
+ 1. ESP32 + I2C LCD (16x2 with I2C module)
+LCD Pins → ESP32
+LCD Pin	Connect to ESP32
+VCC	5V
+GND	GND
+SDA	GPIO 21
+SCL	GPIO 22
+Notes:
+Use 0x27 or 0x3F address (you already used 0x27 )
+If display not working → run I2C scanner
+Keep wires short to avoid garbage text
+
+2. Buzzer with BC547 Transistor
+Since you're using a transistor, this is the correct safe connection
+
+Components:
+BC547 Transistor
+1kΩ resistor
+Buzzer
+Connections:
+Component	Connection
+ESP32 GPIO 27	→ 1k resistor → Base (BC547)
+Emitter (BC547)	GND
+Collector (BC547)	Negative (-) of buzzer
+Positive (+) of buzzer	3.3V or 5V
+Working:
+ESP32 sends signal → transistor amplifies → buzzer sounds louder
+
+3. LED Connection
+Components:
+LED
+220Ω resistor (important)
+Connections:
+LED Pin	Connection
+Anode (+, long leg)	GPIO 2
+Cathode (-, short leg)	→ 220Ω resistor → GND
+ Important:
+Always use resistor or LED may burn
+
+4. ESP32 Power
+ESP32 Pin	Connection
+VIN / 5V	5V supply (USB or adapter)
+GND	Common Ground
+
+5. Common Ground (VERY IMPORTANT)
+All GND must be connected together:
+
+ESP32 GND
+LCD GND
+Transistor emitter
+LED resistor GND
+Without common ground, circuit will not work properly.
+
+ Complete Wiring Overview
+ESP32
+ ├── GPIO 21 → LCD SDA
+ ├── GPIO 22 → LCD SCL
+ ├── GPIO 2  → LED (+) → resistor → GND
+ ├── GPIO 27 → resistor → BC547 Base
+ │
+ ├── BC547:
+ │     Collector → Buzzer (-)
+ │     Emitter → GND
+ │
+ ├── Buzzer (+) → 5V
+ ├── LCD VCC → 5V
+ ├── LCD GND → GND
+
+ Troubleshooting Tips
+Garbage text on LCD:
+Add delay after lcd.init()
+Use Wire.setClock(100000); (you already did )
+Check loose wires
+Adjust contrast screw on I2C module
+
+Buzzer not working:
+Check transistor direction (flat side matters)
+Try active buzzer first
+Ensure correct GPIO (27)
+
+LED not glowing:
+Reverse polarity
+Check resistor connection
